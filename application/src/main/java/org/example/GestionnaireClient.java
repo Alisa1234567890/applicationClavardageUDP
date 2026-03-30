@@ -57,6 +57,9 @@ public class GestionnaireClient implements Runnable {
         this.clients = clients;
     }
 
+    /**
+     * Code exécuté dans le thread
+     */
     @Override
     public void run() {
         String pseudo = clientInfo.getPseudo();
