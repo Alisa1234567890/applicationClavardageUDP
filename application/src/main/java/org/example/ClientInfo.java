@@ -4,11 +4,13 @@ public class ClientInfo {
     private String pseudo;
     private String adresseIP;
     private int port;
+
     ClientInfo(String pseudo, String adresseIP, int port) {
         this.pseudo = pseudo;
         this.adresseIP = adresseIP;
         this.port = port;
     }
+
     String getPseudo() {
         return pseudo;
     }

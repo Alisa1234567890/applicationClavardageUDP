@@ -7,11 +7,14 @@ import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Gère les échanges avec UN client (stocké sous clientInfo)
+ */
 public class GestionnaireClient implements Runnable {
     private static final int BUFFER_SIZE = 1024;
 
     private ClientInfo clientInfo;
-    private DatagramSocket socket;
+    private DatagramSocket socket; // Socket du client
     private ConcurrentHashMap<String, ClientInfo> clients;
 
     GestionnaireClient() {
@@ -60,6 +63,7 @@ public class GestionnaireClient implements Runnable {
         clients.putIfAbsent(pseudo, clientInfo);
 
         try {
+            // Pour chaque client connecté sur le serveur, envoi le message d'arrivée de `clientInfo`
             byte[] envoyees = ("[SERVEUR] " + pseudo + " a rejoint le chat.").getBytes(StandardCharsets.UTF_8);
             for (String pseudoDest : clients.keySet()) {
                 ClientInfo destinataire = clients.get(pseudoDest);
@@ -72,16 +76,19 @@ public class GestionnaireClient implements Runnable {
                 socket.send(paquetEnvoye);
             }
 
+            // écoute en boucle, tant que le socket est actif
             while (!socket.isClosed()) {
+                // Reçevoir le paquet
                 byte[] recues = new byte[BUFFER_SIZE];
                 DatagramPacket paquetRecu = new DatagramPacket(recues, recues.length);
-                socket.receive(paquetRecu);
+                socket.receive(paquetRecu); // attente du paquet : tant qu'il n'y a rien, le thread est bloqué
 
                 String message = new String(paquetRecu.getData(), 0, paquetRecu.getLength(), StandardCharsets.UTF_8).trim();
                 if (message.isEmpty()) {
                     continue;
                 }
 
+                // Vérifier si le message est 'EXIT' et le traiter en conséquence
                 if ("EXIT".equalsIgnoreCase(message)) {
                     clients.remove(pseudo);
                     byte[] depart = ("[SERVEUR] " + pseudo + " a quitte le chat.").getBytes(StandardCharsets.UTF_8);
