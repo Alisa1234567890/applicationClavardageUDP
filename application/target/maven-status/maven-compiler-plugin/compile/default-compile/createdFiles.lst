@@ -1,0 +1,4 @@
+org/example/GestionnaireClient.class
+org/example/ServeurChatUDP.class
+org/example/ClientInfo.class
+org/example/ClientChatUDP.class
