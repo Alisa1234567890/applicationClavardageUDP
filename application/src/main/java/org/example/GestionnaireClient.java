@@ -59,22 +59,22 @@ public class GestionnaireClient implements Runnable {
         String pseudo = clientInfo.getPseudo();
         clients.putIfAbsent(pseudo, clientInfo);
 
-        byte[] bienvenue = ("[SERVEUR] " + pseudo + " a rejoint le chat.").getBytes(StandardCharsets.UTF_8);
-        clients.forEach((pseudoDest, info) -> {
-            try {
-                InetAddress adresse = InetAddress.getByName(info.getAdresseIP());
-                DatagramPacket paquet = new DatagramPacket(bienvenue, bienvenue.length, adresse, info.getPort());
-                socket.send(paquet);
-            } catch (IOException e) {
-                System.err.println("Diffusion impossible vers " + pseudoDest + " : " + e.getMessage());
-            }
-        });
-
         try {
+            byte[] envoyees = ("[SERVEUR] " + pseudo + " a rejoint le chat.").getBytes(StandardCharsets.UTF_8);
+            for (String pseudoDest : clients.keySet()) {
+                ClientInfo destinataire = clients.get(pseudoDest);
+                if (destinataire == null) {
+                    continue;
+                }
+                InetAddress adrClient = InetAddress.getByName(destinataire.getAdresseIP());
+                int prtClient = destinataire.getPort();
+                DatagramPacket paquetEnvoye = new DatagramPacket(envoyees, envoyees.length, adrClient, prtClient);
+                socket.send(paquetEnvoye);
+            }
+
             while (!socket.isClosed()) {
                 byte[] recues = new byte[BUFFER_SIZE];
                 DatagramPacket paquetRecu = new DatagramPacket(recues, recues.length);
-
                 socket.receive(paquetRecu);
 
                 String message = new String(paquetRecu.getData(), 0, paquetRecu.getLength(), StandardCharsets.UTF_8).trim();
@@ -84,38 +84,38 @@ public class GestionnaireClient implements Runnable {
 
                 if ("EXIT".equalsIgnoreCase(message)) {
                     clients.remove(pseudo);
-
                     byte[] depart = ("[SERVEUR] " + pseudo + " a quitte le chat.").getBytes(StandardCharsets.UTF_8);
-                    clients.forEach((pseudoDest, info) -> {
-                        try {
-                            InetAddress adresse = InetAddress.getByName(info.getAdresseIP());
-                            DatagramPacket paquet = new DatagramPacket(depart, depart.length, adresse, info.getPort());
-                            socket.send(paquet);
-                        } catch (IOException e) {
-                            System.err.println("Diffusion impossible vers " + pseudoDest + " : " + e.getMessage());
+
+                    for (String pseudoDest : clients.keySet()) {
+                        ClientInfo destinataire = clients.get(pseudoDest);
+                        if (destinataire == null) {
+                            continue;
                         }
-                    });
+                        InetAddress adrClient = InetAddress.getByName(destinataire.getAdresseIP());
+                        int prtClient = destinataire.getPort();
+                        DatagramPacket paquetEnvoye = new DatagramPacket(depart, depart.length, adrClient, prtClient);
+                        socket.send(paquetEnvoye);
+                    }
                     break;
                 }
 
                 byte[] chat = (pseudo + " : " + message).getBytes(StandardCharsets.UTF_8);
-                clients.forEach((pseudoDest, info) -> {
+                for (String pseudoDest : clients.keySet()) {
                     if (pseudo.equals(pseudoDest)) {
-                        return;
+                        continue;
                     }
-                    try {
-                        InetAddress adresse = InetAddress.getByName(info.getAdresseIP());
-                        DatagramPacket paquet = new DatagramPacket(chat, chat.length, adresse, info.getPort());
-                        socket.send(paquet);
-                    } catch (IOException e) {
-                        System.err.println("Diffusion impossible vers " + pseudoDest + " : " + e.getMessage());
+                    ClientInfo destinataire = clients.get(pseudoDest);
+                    if (destinataire == null) {
+                        continue;
                     }
-                });
+                    InetAddress adrClient = InetAddress.getByName(destinataire.getAdresseIP());
+                    int prtClient = destinataire.getPort();
+                    DatagramPacket paquetEnvoye = new DatagramPacket(chat, chat.length, adrClient, prtClient);
+                    socket.send(paquetEnvoye);
+                }
             }
-        } catch (IOException e) {
-            if (!socket.isClosed()) {
-                System.err.println("Erreur de reception pour " + pseudo + " : " + e.getMessage());
-            }
+        } catch (Exception e) {
+            System.err.println(e);
         } finally {
             clients.remove(pseudo);
             if (!socket.isClosed()) {
