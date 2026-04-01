@@ -1,12 +1,25 @@
 package org.example;
 
 import java.net.DatagramPacket;
+import java.net.SocketException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ServeurChatUDP {
+    private static final int PORT_SERVEUR = 9000;
+    private DatagramSocket socketServeur;
+    private ConcurrentHashMap<String, ClientInfo> clients;
+
+    public ServeurChatUDP() throws SocketException {
+        InetSocketAddress adresse = new InetSocketAddress("localhost", PORT_SERVEUR);
+        socketServeur = new DatagramSocket(null);
+        socketServeur.bind(adresse);
+        clients = new ConcurrentHashMap<>();
+    }
+
+
     public static void main(String[] args) {
         DatagramSocket socketServeur = null;
         try {
