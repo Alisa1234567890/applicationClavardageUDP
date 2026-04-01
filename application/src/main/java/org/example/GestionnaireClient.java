@@ -91,6 +91,17 @@ public class GestionnaireClient implements Runnable {
                     continue;
                 }
 
+                // feature N1: Vérifier si le message est '/liste' et retourner la liste des connectés
+                if ("/liste".equalsIgnoreCase(message)) {
+                    String liste = "[SERVEUR] Clients connectés : " + String.join(", ", clients.keySet());
+                    byte[] listeBytes = liste.getBytes(StandardCharsets.UTF_8);
+                    InetAddress adrClient = InetAddress.getByName(clientInfo.getAdresseIP());
+                    int prtClient = clientInfo.getPort();
+                    DatagramPacket paquetListe = new DatagramPacket(listeBytes, listeBytes.length, adrClient, prtClient);
+                    socket.send(paquetListe);
+                    continue;
+                }
+
                 // Vérifier si le message est 'EXIT' et le traiter en conséquence
                 if ("EXIT".equalsIgnoreCase(message)) {
                     clients.remove(pseudo);
